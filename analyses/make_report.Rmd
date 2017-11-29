@@ -1,0 +1,229 @@
+---
+title: "Summary"
+author: "Sara Petchey"
+date: "7/27/2017"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# Organisation
+
+
+- Always start RStudio by double clicking on the `TS_MOOC_DA.Rproj` file.
+
+- Data dumps for each session should be in it's own folder in the `data` folder of the `project` folder.
+
+- The data file loaded below, which contains all the csv files containing data, has to be previously made using the code `make_Rdata_file.R`.
+
+- Put analyses scripts, such as these, in the `analyses` folder.
+
+- Always use *relative paths*.
+
+
+```{r, warnings=FALSE, message=FALSE}
+# Some preliminaries
+rm(list=ls())
+library(tidyverse)
+library(magrittr)
+library(stringr)
+```
+
+# Load the data
+
+Note that the data file loaded, which contains all the csv files containing data, has to be previously made using the code `make_Rdata_file.R`.
+
+```{r}
+## use the following if not using knitr
+#load("data/biodiversity_1505727848128.Rdata")
+## use the following if using knitr
+load("../data/biodiversity_1505727848128.Rdata")
+```
+
+
+
+# Courses
+
+Here we get the courses we have data for:
+```{r}
+courses
+```
+There is one course (note there might be an update somewhere).
+
+
+# Course branches (= version)
+
+Course branches (only one at the moment, I think, so not used in further analyses):
+```{r}
+course_branches
+```
+Only one course branch.
+
+
+# On demand sesssions
+
+On demand sessions:
+```{r}
+on_demand_sessions
+```
+Thirteen(?) on demand sessions.
+
+
+
+# Learners in od sessions
+
+Membership in each on demand session:
+```{r}
+on_demand_session_memberships
+```
+Note that some are duplicated as they come in and out of sessions.
+
+
+Number of unique learners across all sessions:
+```{r}
+length(unique(on_demand_session_memberships$zurich_user_id))
+```
+
+
+Number of unique learners per session:
+```{r}
+num_learners_per_session <- on_demand_session_memberships %>%
+  group_by(on_demand_session_id) %>%
+  summarise(num_learners = length(unique(zurich_user_id))) %>%
+  full_join(on_demand_sessions)
+num_learners_per_session
+```
+
+Number of unique learners per session, totalled:
+```{r}
+sum(num_learners_per_session$num_learners, na.rm=T)
+```
+Some individual learners participated in multiple sessions.
+
+
+Look at learners per session:
+```{r}
+qplot(x=on_demand_sessions_start_ts, y=num_learners,
+      data=num_learners_per_session)
+```
+
+
+# Video watching patterns
+
+Bring in course items:
+```{r}
+course_structure <- left_join(course_items, course_item_types)
+course_structure <- full_join(course_structure, course_lessons)
+course_structure <- full_join(course_structure, course_modules)
+```
+
+
+```{r}
+course_progress <- full_join(course_progress, course_progress_state_types)
+course_progress <- full_join(course_progress, course_structure)
+```
+
+
+Video lecture viewing behaviour (all od sessions combined at present):
+```{r}
+## get number of users starting / finishing a video lecture
+rez1 <- course_progress %>% filter(course_item_type_category=="lecture") %>%
+  group_by(course_lesson_order,
+           course_lesson_name,
+           course_module_order,
+           course_module_name,
+           course_progress_state_type_desc) %>%
+  summarise(number=length(unique(zurich_user_id)))
+
+ggplot(rez1, aes(x=course_lesson_order, y=number,
+                 colour=course_progress_state_type_desc)) +
+  facet_wrap(~course_module_order, nrow=1) +
+  geom_point() + geom_line() +
+  xlab("Lesson") +
+  ylab("Number of learners") +
+  ggtitle("My graph")
+```
+
+
+# Peer reviewer behaviour
+
+
+```{r}
+peer_review_part_free_responses_t <- left_join(peer_review_part_free_responses,
+                                               peer_reviews)
+peer_review_part_free_responses_t <- left_join(peer_review_part_free_responses_t,
+                                               peer_assignments)
+
+peer_review_part_free_responses_t <- left_join(peer_review_part_free_responses_t,
+                                                peer_assignment_review_schema_parts)
+peer_review_part_free_responses_t <- left_join(peer_review_part_free_responses_t,
+                                                 course_branch_item_peer_assignments)
+peer_review_part_free_responses_t <- left_join(peer_review_part_free_responses_t,
+                                                 course_structure)
+
+## Peer assignments
+sort(unique(peer_review_part_free_responses_t$peer_assignment_id))
+sort(unique(peer_review_part_free_responses_t$peer_assignment_base_id))
+## the first peer review assignment has no free responses, only tick boxes
+
+## check for duplicated responses
+sum(duplicated(peer_review_part_free_responses_t$peer_review_part_free_response_text))
+## There are duplicates, but I think they are people giving the same response to different questions, and different people giving same responses, e.g. Good.
+
+sum(xtabs(~peer_assignment_id, peer_review_part_free_responses_t))
+
+peer_review_part_free_responses_t %>%
+  group_by(peer_assignment_base_id, course_module_order,
+           course_module_name, peer_assignment_review_schema_part_id) %>%
+  summarise(number=n()) %>%
+  ungroup() %>%
+  select(-contains("id")) %>%
+  arrange(course_module_order)
+
+peer_review_part_free_responses_t %>%
+  group_by(peer_assignment_id, course_module_order,
+           course_module_name, peer_assignment_review_schema_part_id) %>%
+  summarise(number=n()) %>%
+  ungroup() %>%
+  select(-contains("id")) %>%
+  arrange(course_module_order)
+
+
+xxx <- distinct(select(peer_review_part_free_responses_t,
+                peer_assignment_base_id,
+                peer_assignment_review_schema_part_id,
+                peer_assignment_review_schema_part_prompt,
+                course_item_name,
+                course_module_order,
+                course_module_name,
+                course_module_desc)) %>%
+  arrange(course_module_order) %>%
+  select(-contains("id"))
+xxx
+
+```
+
+```{r}
+peer_review_part_free_responses_t <- peer_review_part_free_responses_t %>%
+  mutate(review_length = nchar(peer_review_part_free_response_text))
+
+good <- filter(peer_review_part_free_responses_t, review_length==4) %>%
+  select(peer_review_part_free_response_text) %>%
+  distinct()
+
+ggplot(peer_review_part_free_responses_t, aes(x=log10(review_length))) +
+  geom_histogram()
+
+ggplot(peer_review_part_free_responses_t,
+       aes(x=peer_review_created_ts, y=log10(review_length))) +
+  geom_point() +
+  facet_wrap(~course_module_name)
+  
+
+
+```
+
+
+
+
+
