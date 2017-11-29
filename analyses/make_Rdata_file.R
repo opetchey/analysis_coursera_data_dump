@@ -1,7 +1,11 @@
+rm(list=ls())
+
+## you will need to have the following libraries installed
 library(readr)
 library(stringr)
 
-data_folder <- "data/teachingscience_1499756645319"
+## change your_data_folder
+data_folder <- "data/your_data_folder"
 
 dir(path=data_folder)
 filenames <- dir(path=data_folder, pattern="*.csv")
@@ -17,4 +21,6 @@ for(i in filenames) {
 }
 rm(data_folder, filenames, filepath, i)
 #remove data frames with no obs
-save.image("data/teachingscience_1499756645319.Rdata")
+
+## change your_data_folder
+save.image("data/your_data_folder.Rdata")

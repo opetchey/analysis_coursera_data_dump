@@ -1,6 +1,6 @@
 ---
 title: "Summary"
-author: "Sara Petchey"
+author: "Owen Petchey"
 date: "7/27/2017"
 output:
   pdf_document: default
@@ -10,16 +10,17 @@ output:
 # Organisation
 
 
-- Always start RStudio by double clicking on the `TS_MOOC_DA.Rproj` file.
-
-- Data dumps for each session should be in it's own folder in the `data` folder of the `project` folder.
+- Data dumps for each session should be in their own folder in the `data` folder.
 
 - The data file loaded below, which contains all the csv files containing data, has to be previously made using the code `make_Rdata_file.R`.
 
-- Put analyses scripts, such as these, in the `analyses` folder.
-
 - Always use *relative paths*.
 
+- Install the required R libraries (see next code chunk for a list).
+
+- Change the name of the data file, in the second code chunk below.
+
+- Code is tested on a few different Uni Zurich Coursera Course data dumps, but is likely far from stable / reliable.
 
 ```{r, warnings=FALSE, message=FALSE}
 # Some preliminaries
@@ -35,9 +36,9 @@ Note that the data file loaded, which contains all the csv files containing data
 
 ```{r}
 ## use the following if not using knitr
-#load("data/biodiversity_1505727848128.Rdata")
+#load("data/your_data_folder.Rdata")
 ## use the following if using knitr
-load("../data/biodiversity_1505727848128.Rdata")
+load("../data/your_data_folder.Rdata")
 ```
 
 
